@@ -18,6 +18,7 @@ public class MainActivity extends Activity {
         // nimic nou
         // nimic nou 2
      // nimic nou 3
+        //nimic nou 4
 
         if (savedInstanceState == null) {
             getFragmentManager().beginTransaction()
