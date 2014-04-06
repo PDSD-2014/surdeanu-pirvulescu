@@ -16,6 +16,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         // nimic nou
+        // nimic nou 2
 
         if (savedInstanceState == null) {
             getFragmentManager().beginTransaction()
