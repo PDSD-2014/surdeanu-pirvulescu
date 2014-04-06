@@ -51,6 +51,7 @@ public class MainActivity extends Activity {
     	// Simplu test
         public PlaceholderFragment() {
         }
+        // Test
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
