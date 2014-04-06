@@ -52,6 +52,7 @@ public class MainActivity extends Activity {
         public PlaceholderFragment() {
         }
         // Test
+        //to do test git 3
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
