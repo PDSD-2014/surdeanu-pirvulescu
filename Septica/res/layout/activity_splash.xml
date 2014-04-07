@@ -1,0 +1,22 @@
+<!-- 
+	Layout-ul va contine o imagine de fundal, prezenta in directorul
+    "drawable-*" din cadrul sectiunii de resurse. De asemenea, aceasta va fi
+    prezenta pe intreg ecranul.
+-->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/SplashLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/splash" >
+
+    <!-- In cadrul layout-ului vom avea un TextView ce anunta progresul aplicatiei. -->
+    <TextView
+        android:id="@+id/SplashProgressText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:paddingBottom="50dp"
+        android:fontFamily="sans-serif-condensed"        android:gravity="center_horizontal|center_vertical" />
+
+</RelativeLayout>
