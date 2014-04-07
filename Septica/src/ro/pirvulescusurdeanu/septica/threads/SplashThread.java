@@ -4,7 +4,7 @@ import java.lang.reflect.Method;
 
 import ro.pirvulescusurdeanu.septica.notifiers.SplashListener;
 import ro.pirvulescusurdeanu.septica.notifiers.SplashNotifier;
-import ro.pirvulescusurdeanu.utils.Status;
+import ro.pirvulescusurdeanu.septica.utils.Status;
 
 public class SplashThread extends Thread implements SplashNotifier {
 	

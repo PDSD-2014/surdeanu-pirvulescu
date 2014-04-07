@@ -3,7 +3,7 @@ package ro.pirvulescusurdeanu.septica.activities;
 import ro.pirvulescusurdeanu.septica.R;
 import ro.pirvulescusurdeanu.septica.notifiers.SplashListener;
 import ro.pirvulescusurdeanu.septica.threads.SplashThread;
-import ro.pirvulescusurdeanu.utils.Status;
+import ro.pirvulescusurdeanu.septica.utils.Status;
 import android.content.Intent;
 import android.os.Bundle;
 
