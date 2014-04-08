@@ -4,5 +4,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="ro.pirvulescusurdeanu.septica.MainActivity"
-    tools:ignore="MergeRootFrame" />
+    tools:ignore="MergeRootFrame"
+    android:background="@drawable/mainbg">
+
+	<Button 
+	    android:id="@+id/play"
+	    android:text="Joaca"
+	    android:layout_width="wrap_content"
+    	android:layout_height="wrap_content"
+    	android:gravity="center_horizontal|center_vertical" />
+</FrameLayout>
 

@@ -1,7 +1,9 @@
 package ro.pirvulescusurdeanu.septica.activities;
 
 import ro.pirvulescusurdeanu.septica.R;
+import ro.pirvulescusurdeanu.septica.listeners.PlayClickListener;
 import android.os.Bundle;
+import android.widget.Button;
 
 public class MainActivity extends AbstractActivity {
 
@@ -11,7 +13,9 @@ public class MainActivity extends AbstractActivity {
 
 	@Override
 	protected void afterCreate(Bundle savedInstanceState) {
-		// TODO: Ce se intampla dupa ce s-a creat activitatea principala...		
+		// Se inregistreaza pe butonul de Play un ascultator
+		Button play = (Button) findViewById(R.id.play);
+		play.setOnClickListener(new PlayClickListener());
 	}
 
 }

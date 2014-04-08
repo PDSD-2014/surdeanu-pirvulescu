@@ -35,7 +35,7 @@ public class SplashActivity extends AbstractActivity implements SplashListener {
 			// iar cea curenta va fi terminata.
 			Intent intent = new Intent(this, MainActivity.class);
 			this.startActivity(intent);
-		    this.finish();
+			this.finish();
 		}
 		// Ce se intampla in cazul in care apare o eroare?
 		else {
