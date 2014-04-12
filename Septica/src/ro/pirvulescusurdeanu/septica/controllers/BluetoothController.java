@@ -18,7 +18,7 @@ public class BluetoothController {
 		adapter = BluetoothAdapter.getDefaultAdapter();
 	}
 	
-	public BluetoothController getInstance() {
+	public static BluetoothController getInstance() {
 		if (instance == null) {
 			instance = new BluetoothController();
 		}
