@@ -1,7 +1,11 @@
 package ro.pirvulescusurdeanu.septica.controllers;
 
+import java.util.Set;
+
+import ro.pirvulescusurdeanu.septica.services.BluetoothService;
 import ro.pirvulescusurdeanu.septica.utils.BluetoothStatus;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 
 /**
  * TODO
@@ -12,6 +16,8 @@ import android.bluetooth.BluetoothAdapter;
 public class BluetoothController {
 	private static BluetoothController instance;
 	private final BluetoothAdapter adapter;
+	private BluetoothService service;
+	private BluetoothDevice device;
 	
 	private BluetoothController() {
 		// "adapter" va fi NULL daca dispozitivul utilizat nu are Bluetooth
@@ -23,6 +29,19 @@ public class BluetoothController {
 			instance = new BluetoothController();
 		}
 		return instance;
+	}
+	
+	public void createService() {
+		service = new BluetoothService();
+	}
+	
+	public void startServer() {
+		service.start();
+	}
+	
+	public void startClient() {
+		service.connect(device);
+		service.write("Test");
 	}
 	
 	/**
@@ -39,5 +58,23 @@ public class BluetoothController {
 		} else {
 			return BluetoothStatus.ENABLED;
 		}
+	}
+	
+	/**
+	 * Intoarce lista de dispozitive cu care exista un pairing deja stabilit.
+	 * 
+	 * @return
+	 */
+	public BluetoothDevice[] getPairedDevices() {
+		Set<BluetoothDevice> devices = adapter.getBondedDevices();
+		return devices.toArray(new BluetoothDevice[devices.size()]);
+	}
+	
+	public BluetoothDevice getBluetoothDevice() {
+		return device;
+	}
+	
+	public void setBluetoothDevice(BluetoothDevice device) {
+		this.device = device;
 	}
 }
