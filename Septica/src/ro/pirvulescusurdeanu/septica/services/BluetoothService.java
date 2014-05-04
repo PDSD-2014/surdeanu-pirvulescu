@@ -1,18 +1,16 @@
 package ro.pirvulescusurdeanu.septica.services;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
+import android.util.Log;
 
 public class BluetoothService {
 	private BluetoothServiceStatus status;
@@ -22,8 +20,6 @@ public class BluetoothService {
 	private ConnectedThread connectedThread;
 	
     private static final String NAME_INSECURE = "BluetoothChatInsecure"; 
-    private static final UUID MY_UUID_INSECURE = 
-        UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66"); 
 	
     public BluetoothService() {
         adapter = BluetoothAdapter.getDefaultAdapter(); 
@@ -31,8 +27,20 @@ public class BluetoothService {
     }
     
     private synchronized void setState(BluetoothServiceStatus status) {
+    	Log.i("Test", status.name());
     	this.status = status;
-    } 
+    }
+    
+    public void waitUntilConnected() {
+    	while (status != BluetoothServiceStatus.CONNECTED) {
+    		try {
+				Thread.sleep(250);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	}
+    }
     
     public synchronized void start() {
         setState(BluetoothServiceStatus.LISTEN);
@@ -58,18 +66,12 @@ public class BluetoothService {
  
         connectThread = new ConnectThread(device);
         connectThread.start();
+        
         setState(BluetoothServiceStatus.CONNECTING);
     }
     
     public synchronized void connected(BluetoothSocket socket,
-    								   BluetoothDevice device) {
-        // Opreste firul de executie pe care se asculta dupa alte conexiuni.
-    	// Facem acest lucru pentru ca vom juca mereu in 2.
-        if  (acceptThread != null) { 
-        	acceptThread.cancel(); 
-        	acceptThread = null;  
-        }
-        
+    								   BluetoothDevice device) {      
         connectedThread = new ConnectedThread(socket);
         connectedThread.start();
  
@@ -84,19 +86,12 @@ public class BluetoothService {
         start();
     }
     
-    public void write(String out) { 
-        ConnectedThread r; 
-        synchronized (this) { 
-            if (status != BluetoothServiceStatus.CONNECTED) {
-            	return;
-            }
-            r = connectedThread; 
-        } 
-        r.write(out);
+    public void write(byte[] buffer) { 
+        connectedThread.write(buffer);
     }
     
     private class AcceptThread extends Thread {
-        private  final  BluetoothServerSocket serverSocket;
+        private final BluetoothServerSocket serverSocket;
 
         public AcceptThread() { 
             BluetoothServerSocket temporary = null;  
@@ -106,8 +101,8 @@ public class BluetoothService {
             try {
             	// Initializeaza o conexiune nesecurizata. Este un simplu joc,
             	// nu avem de ce sa facem ceva sigur.
-                temporary = adapter.listenUsingInsecureRfcommWithServiceRecord( 
-                            NAME_INSECURE, MY_UUID_INSECURE);
+                temporary = adapter.listenUsingRfcommWithServiceRecord( 
+                            NAME_INSECURE, UUID.randomUUID());
             } catch (IOException e) {
                 // TODO: Jurnalizare eroare 
             }
@@ -127,8 +122,10 @@ public class BluetoothService {
                 	// la nivelul transport s-a realizat sau o exceptie a fost
                 	// generata.
                     socket = serverSocket.accept();
+                    setState(BluetoothServiceStatus.CONNECTED);   
                 } catch (IOException e) {
                     // TODO: Jurnalizare exceptie
+                	e.printStackTrace();
                 	// Iesim din loop pentru a nu ramane inghetati cu firul de
                 	// executie.
                     break;
@@ -157,17 +154,6 @@ public class BluetoothService {
                 }
             }
         }
-        
-        /**
-         * Intrerupe si anuleaza executia unui fir de executie.
-         */
-        public void cancel() {  
-            try  {
-                serverSocket.close();
-            } catch  (IOException e) {
-                // TODO: Jurnalizare exceptie
-            }
-        } 
     } // AcceptThread
     
     private class ConnectThread extends Thread {
@@ -178,18 +164,16 @@ public class BluetoothService {
            	this.device = device;
            	
             try {
-            	socket = device.createInsecureRfcommSocketToServiceRecord( 
-                            MY_UUID_INSECURE);
-            } catch (IOException e) {
-                // TODO: Jurnalizare exceptie
+            	Method m = device.getClass().getMethod("createRfcommSocket", new Class[] {int.class});
+            	// Canalul utilizat va fi cel cu numarul 10
+            	socket = (BluetoothSocket) m.invoke(device, Integer.valueOf(10));
+            } catch (Exception e) {
+            	
             }
         } 
  
         @Override
-		public  void  run() { 
-            // Anuleaza procesul de discovery
-            //adapter.cancelDiscovery(); 
- 
+		public void run() { 
             try {
                 socket.connect(); 
             } catch (IOException e) { 
@@ -222,8 +206,6 @@ public class BluetoothService {
         private final BluetoothSocket socket;
         private InputStream inputStream;
         private OutputStream outputStream;
-        private BufferedReader inStream;
-        private BufferedWriter outStream;
  
         public ConnectedThread(BluetoothSocket socket) {
             this.socket = socket;
@@ -231,8 +213,6 @@ public class BluetoothService {
             try {
             	inputStream = socket.getInputStream();
             	outputStream = socket.getOutputStream();
-            	inStream = new BufferedReader(new InputStreamReader(inputStream));
-            	outStream = new BufferedWriter(new OutputStreamWriter(outputStream));
             } catch (IOException e) {
                 // TODO: Jurnalizare exceptie
             	e.printStackTrace();
@@ -241,10 +221,15 @@ public class BluetoothService {
  
         @Override
 		public void run() {
+        	byte[] buffer = new byte[1024];
+        	int bytes;
+        	
             while (true) {
-                try  {
-                	if (inputStream.available() > 0)
-                		System.out.println(inStream.readLine());
+                try {
+                	if (inputStream.available() > 0) {
+                		bytes = inputStream.read(buffer);
+                		Log.i("Test", new String(buffer));
+                	}
                 } catch (IOException e) {
                 	// Conexiunea a fost pierduta...
                 	e.printStackTrace();
@@ -254,10 +239,11 @@ public class BluetoothService {
             }
         } 
  
-        public void write(String line) {
+        public void write(byte[] buffer) {
             try {
-                outStream.write(line + "\n");
+                outputStream.write(buffer);
                 outputStream.flush();
+                Log.i("Test", "Test1");
             } catch (IOException e) {
                 // TODO: Jurnalizare exceptie.
             	e.printStackTrace();
