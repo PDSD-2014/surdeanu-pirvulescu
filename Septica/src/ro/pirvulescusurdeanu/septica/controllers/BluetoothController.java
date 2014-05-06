@@ -37,11 +37,18 @@ public class BluetoothController {
 	
 	public void startServer() {
 		service.start();
+		try {
+			Thread.sleep(10000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		//service.waitUntilConnected();
+		//service.write("Test".getBytes());
 	}
 	
 	public void startClient() {
 		service.connect(device);
-		service.write("Test");
 	}
 	
 	/**
