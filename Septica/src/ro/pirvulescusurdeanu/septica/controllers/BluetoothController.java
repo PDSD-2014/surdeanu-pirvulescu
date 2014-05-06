@@ -43,8 +43,8 @@ public class BluetoothController {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		//service.waitUntilConnected();
-		//service.write("Test".getBytes());
+		service.waitUntilConnected();
+		service.write("Test".getBytes());
 	}
 	
 	public void startClient() {
