@@ -3,7 +3,6 @@ package ro.pirvulescusurdeanu.septica.services;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Method;
 import java.util.UUID;
 
 import android.bluetooth.BluetoothAdapter;
@@ -20,6 +19,8 @@ public class BluetoothService {
 	private ConnectedThread connectedThread;
 	
     private static final String NAME_INSECURE = "BluetoothChatInsecure"; 
+    
+    private static final UUID MY_UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
 	
     public BluetoothService() {
         adapter = BluetoothAdapter.getDefaultAdapter(); 
@@ -102,7 +103,7 @@ public class BluetoothService {
             	// Initializeaza o conexiune nesecurizata. Este un simplu joc,
             	// nu avem de ce sa facem ceva sigur.
                 temporary = adapter.listenUsingRfcommWithServiceRecord( 
-                            NAME_INSECURE, UUID.randomUUID());
+                            NAME_INSECURE, MY_UUID);
             } catch (IOException e) {
                 // TODO: Jurnalizare eroare 
             }
@@ -121,6 +122,7 @@ public class BluetoothService {
                 	// Apel blocant care se va intoarce numai dupa ce o conexiune
                 	// la nivelul transport s-a realizat sau o exceptie a fost
                 	// generata.
+                	Log.i("aici3","inainte de conexiune");
                     socket = serverSocket.accept();
                     setState(BluetoothServiceStatus.CONNECTED);   
                 } catch (IOException e) {
@@ -133,6 +135,7 @@ public class BluetoothService {
  
                 // Daca avem un socket valid pentru client
                 if (socket != null) {
+                	Log.i("aici3","nu e null");
                     synchronized (BluetoothService.this) {
                         switch (status) { 
                         	case LISTEN:
@@ -157,19 +160,24 @@ public class BluetoothService {
     } // AcceptThread
     
     private class ConnectThread extends Thread {
-        private BluetoothSocket socket; 
+        private final BluetoothSocket socket; 
         private final BluetoothDevice device; 
  
         public ConnectThread(BluetoothDevice device) {
-           	this.device = device;
-           	
+            
+            
+            this.device = device;
+            BluetoothSocket tmp = null;
+
+            // Get a BluetoothSocket for a connection with the
+            // given BluetoothDevice
             try {
-            	Method m = device.getClass().getMethod("createRfcommSocket", new Class[] {int.class});
-            	// Canalul utilizat va fi cel cu numarul 10
-            	socket = (BluetoothSocket) m.invoke(device, Integer.valueOf(10));
-            } catch (Exception e) {
-            	
+                tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
+            } catch (IOException e) {
+                Log.e("aa", "create() failed", e);
             }
+            socket = tmp;
+            
         } 
  
         @Override
