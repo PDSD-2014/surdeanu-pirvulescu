@@ -31,11 +31,15 @@
         </activity>
         <activity
             android:name="ro.pirvulescusurdeanu.septica.activities.DeviceActivity"
-            android:label="@string/device_activity"
-            android:theme="@android:style/Theme.Dialog"
             android:layout_width="fill_parent"
-          	android:layout_height="fill_parent"
-          	android:padding="35dp">
+            android:layout_height="fill_parent"
+            android:label="@string/device_activity"
+            android:padding="35dp"
+            android:theme="@android:style/Theme.Dialog" >
+        </activity>
+        <activity
+            android:name="ro.pirvulescusurdeanu.septica.activities.GameActivity"
+            android:label="@string/title_activity_game" >
         </activity>
     </application>
 

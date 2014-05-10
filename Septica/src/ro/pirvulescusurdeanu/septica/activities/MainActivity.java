@@ -3,17 +3,19 @@ package ro.pirvulescusurdeanu.septica.activities;
 import ro.pirvulescusurdeanu.septica.R;
 import ro.pirvulescusurdeanu.septica.controllers.BluetoothController;
 import ro.pirvulescusurdeanu.septica.listeners.PlayClickListener;
+import ro.pirvulescusurdeanu.septica.notifiers.MainListener;
 import ro.pirvulescusurdeanu.septica.utils.Constants;
 import ro.pirvulescusurdeanu.septica.utils.TagName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 
-public class MainActivity extends AbstractActivity {
+public class MainActivity extends AbstractActivity implements MainListener {
 	private PlayClickListener listener;
 	
 	public MainActivity() {
 		super(R.layout.activity_main);
+		BluetoothController.getInstance().addMainListener(this);
 	}
 
 	@Override
@@ -44,5 +46,12 @@ public class MainActivity extends AbstractActivity {
 				break;
 		}
     }
+
+	@Override
+	public void startGame(boolean isServer) {
+		Intent intent = new Intent(this, GameActivity.class);
+		this.startActivity(intent);
+		this.finish();		
+	}
 
 }
