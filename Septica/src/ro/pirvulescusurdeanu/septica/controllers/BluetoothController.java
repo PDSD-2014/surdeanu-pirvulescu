@@ -13,8 +13,8 @@ import android.bluetooth.BluetoothDevice;
 /**
  * TODO
  * 
- * @author 	Mihu
- * @since	1.0
+ * @author Mihu
+ * @since 1.0
  */
 public class BluetoothController implements MainNotifier {
 	private static BluetoothController instance;
@@ -23,58 +23,62 @@ public class BluetoothController implements MainNotifier {
 	private BluetoothDevice device;
 	private boolean isServer = false;
 	private final LinkedList<String> queue;
-	
+
 	private BluetoothController() {
 		// "adapter" va fi NULL daca dispozitivul utilizat nu are Bluetooth
 		adapter = BluetoothAdapter.getDefaultAdapter();
 		queue = new LinkedList<String>();
 	}
-	
+
 	public static BluetoothController getInstance() {
 		if (instance == null) {
 			instance = new BluetoothController();
 		}
 		return instance;
 	}
-	
+
 	public void createService() {
 		service = new BluetoothService();
 	}
-	
+
 	public void startServer() {
 		service.start();
 		service.waitUntilConnected();
 		isServer = true;
 		notifyStartGame();
 	}
-	
+
 	public void startClient() {
 		service.connect(device);
 		service.waitUntilConnected();
 		notifyStartGame();
 	}
-	
+
 	public boolean isServer() {
 		return isServer;
 	}
-	
+
 	/**
-	 * Metoda utitilizata de firul de executie asociat comunicarii prin Bluetooth.
-	 * Adauga in coada de mesaje un mesaj primit prin Bluetooth.
+	 * Metoda utitilizata de firul de executie asociat comunicarii prin
+	 * Bluetooth. Adauga in coada de mesaje un mesaj primit prin Bluetooth.
 	 * 
 	 * @param message
-	 * 		Mesajul care a fost primit prin Bluetooth.
+	 *            Mesajul care a fost primit prin Bluetooth.
 	 */
 	public synchronized void addMessage(String message) {
 		queue.addLast(message);
 	}
-	
+
+	public void sendMessage(String message) {
+		service.write(message);
+	}
+
 	/**
 	 * Metoda utilizata pentru a returna un mesaj din coada de mesaje primite.
 	 * Este vorba despre cel mai vechi mesaj primit.
 	 * 
-	 * @return
-	 * 		Mesajul din coada sau null in cazul in care lista de mesaje este goala.
+	 * @return Mesajul din coada sau null in cazul in care lista de mesaje este
+	 *         goala.
 	 */
 	public synchronized String removeMessage() {
 		if (!queue.isEmpty()) {
@@ -82,7 +86,7 @@ public class BluetoothController implements MainNotifier {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Metoda utilizata pentru a verifica daca exista un mesaj receptionat in
 	 * coada de mesaje.
@@ -90,7 +94,7 @@ public class BluetoothController implements MainNotifier {
 	public synchronized boolean hasMessage() {
 		return !queue.isEmpty();
 	}
-	
+
 	/**
 	 * Care este statusul dispozitivului de tip Bluetooth asociat telefonului
 	 * mobil de pe care ruleaza aplicatia?
@@ -104,7 +108,7 @@ public class BluetoothController implements MainNotifier {
 			return BluetoothStatus.ENABLED;
 		}
 	}
-	
+
 	/**
 	 * Intoarce lista de dispozitive cu care exista un pairing deja stabilit.
 	 */
@@ -112,11 +116,11 @@ public class BluetoothController implements MainNotifier {
 		Set<BluetoothDevice> devices = adapter.getBondedDevices();
 		return devices.toArray(new BluetoothDevice[devices.size()]);
 	}
-	
+
 	public BluetoothDevice getBluetoothDevice() {
 		return device;
 	}
-	
+
 	public void setBluetoothDevice(BluetoothDevice device) {
 		this.device = device;
 	}
@@ -124,7 +128,7 @@ public class BluetoothController implements MainNotifier {
 	@Override
 	public void addMainListener(MainListener listener) {
 		listeners.add(listener);
-		
+
 	}
 
 	@Override
@@ -132,6 +136,6 @@ public class BluetoothController implements MainNotifier {
 		for (MainListener listener : listeners) {
 			listener.startGame(isServer);
 		}
-		
+
 	}
 }
