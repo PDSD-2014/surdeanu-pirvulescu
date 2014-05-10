@@ -6,7 +6,7 @@ import android.content.Context;
 
 public class CardList {
 	
-	ArrayList<Card>  allCards  = new ArrayList<Card>();
+	public ArrayList<Card>  allCards  = new ArrayList<Card>();
 	
 	public CardList(Context context){
 		
