@@ -1,105 +1,108 @@
 package ro.pirvulescusurdeanu.septica.cards;
 
+import ro.pirvulescusurdeanu.septica.activities.GameActivity;
+import ro.pirvulescusurdeanu.septica.controllers.MainController;
+import ro.pirvulescusurdeanu.septica.utils.PictureFinder;
+import android.view.ViewGroup.LayoutParams;
+import android.widget.ImageView;
 
-import ro.pirvulescusurdeanu.septica.utils.CardType;
-
+/**
+ * Clasa model ce descrie o carte dintr-un pachet de carti.
+ */
 public class CardBase {
-
-	//proprietati carte
-	private final int points; //daca o carte are punctaj sau nu
-	private final int cardNumber; //ce numar are cartea
-	private final String name; //numele cartii
-	private CardType type; //tipul cartii
-
-	public CardBase(String name) {
-
-		this.name = "" + name;
-		String aux_point = "";
-		aux_point = "" + this.name.charAt(1);
-
-		//verificam daca cartea va avea punct sau nu, verificand dupa numele cartii(daca este As sau un 10)
-		if (aux_point.equals("1")) {
-			points = 1;
-		} else {
-			points = 0;
-		}
-
-		//obtinem ce numar are cartea in functie de numele ei
-		this.cardNumber = this.calculateNumber(this.name);
-		
-		//vedem ce tip de carte este in functie de prima litera din nume
-		String tipCarte = "" + this.name.charAt(0);
-		
-		if (tipCarte.equals("d")) {
-			this.setType(CardType.Diamond);
-		} else if(tipCarte.equals("c")){
-			
-			this.setType(CardType.Club);
-		}else if(tipCarte.equals("s")){
-			
-			this.setType(CardType.Spades);
-		}else if(tipCarte.equals("h")){
-			
-			this.setType(CardType.Hearts);
-		}
-	}
-
-	//aceasta functie obtine numarul cartii din nume
-	private int calculateNumber(String name) {
-
-		//verificam daca lungimea cartii este 3, numai cele cu numarul 10 au lungimea 3, de exemplu d10, h10, etc
-		if (name.length() == 3)
-			return 10;
-
-		String aux = "";
-		aux = "" + this.name.charAt(1);
-
-		//verificam daca este juvete, regina sau rege
-		if (aux.equals("j")) {
-			return 12;
-		} else if (aux.equals("q")) {
-			return 13;
-		} else if (aux.equals("k")) {
-
-			return 14;
-		}
-
-		//daca nu obtinem numarul cartii
-		int number = Integer.parseInt(aux);
-
-		return number;
-
-	}
-
+	/** Tipul cartii */
+	private CardType type;
+	/** Numarul cartii : 7, 8, 9, 10, 11, 12, 13, 14 */
+	private final int number;
+	/** Referinta catre view-ul cu imaginea aferenta. */
+	private ImageView image;
 	
-	//intoarce numarul de puncte din carte
-	public int getPoints() {
-
-		return points;
-	}
-
-	//intoarce ce numar are cartea
-	public int getNumber() {
-
-		return this.cardNumber;
-	}
-
-	//intoarce numele cartii
-	public String getName() {
-
-		return this.name;
-	}
-
-	//intoarce tipul cartii
-	public CardType getType() {
-		return type;
-	}
-
-	//seteaza tipul cartii
-	public void setType(CardType type) {
+	public CardBase(int number, CardType type) {
+		this.number = number;
 		this.type = type;
+		
+		setImageReference();
 	}
-
-
+	
+	public CardBase(String name) {
+		switch (name.charAt(0)) {
+			case 'd':
+				type = CardType.DIAMOND;
+				break;
+			case 'c':
+				type = CardType.CLUB;
+				break;
+			case 'h':
+				type = CardType.HEART;
+				break;
+			default:
+				type = CardType.SPADE;
+		}
+		number = Integer.parseInt(name.substring(1));
+		
+		setImageReference();
+	}
+	
+	private void setImageReference() {
+		image = new ImageView(MainController.getInstance().getCurrentActivity().getBaseContext());
+		image.setImageResource(PictureFinder.findPictureByName(getName()));
+		// Mai setam cativa parametri pentru imagini
+		image.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT,
+											   LayoutParams.WRAP_CONTENT));
+		// Fiecare imagine va pastra intern o referinta catre aceasta clasa, ce
+		// o descrie, in fapt.
+		image.setTag(this);
+	}
+	
+	public ImageView getImage() {
+		return image;
+	}
+	
+	public int getNumber() {
+		return number;
+	}
+	
+	/**
+	 * Ataseaza un ascultator pe o carte.
+	 */
+	public void registerClickListener() {
+		image.setOnClickListener((GameActivity)MainController.getInstance().getCurrentActivity());
+	}
+	
+	/**
+	 * Detaseaza un ascultator de pe o carte.
+	 */
+	public void unregisterClickListener() {
+		image.setOnClickListener(null);
+	}
+	
+	/**
+	 * Verifica daca s-a produs o taietura de catre celalalt jucator.
+	 * 
+	 * @param card
+	 * 		Cartea cu care se compara
+	 * @return
+	 * 		True daca exista taiatura sau False altfel.
+	 */
+	public boolean isCut(CardBase card) {
+		return (card.getNumber() == 7 || number == card.getNumber()) ? true : false;
+	}
+	
+	/**
+	 * Intoarce numarul de puncte pe care o carte il are in calcularea scorului
+	 * final.
+	 */
+	public int getPoints() {
+		// Doar 10 si AS-ul sunt puncte.
+		return (number == 10 || number == 11) ? 1 : 0;
+	}
+	
+	/**
+	 * Determina si intoarce numele cartii pe baza caruia putem selecta imaginea
+	 * aferenta cartii.
+	 */
+	public String getName() {
+		return type.getType() + number;
+	}
 
 }

@@ -2,10 +2,8 @@ package ro.pirvulescusurdeanu.septica.utils;
 
 import java.lang.reflect.Field;
 
-import android.R;
+import ro.pirvulescusurdeanu.septica.R;
 import android.util.Log;
-
-
 
 public class PictureFinder {
 	
