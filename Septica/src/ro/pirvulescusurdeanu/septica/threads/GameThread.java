@@ -8,6 +8,7 @@ import ro.pirvulescusurdeanu.septica.cards.Deck;
 import ro.pirvulescusurdeanu.septica.controllers.BluetoothController;
 import ro.pirvulescusurdeanu.septica.controllers.ErrorController;
 import ro.pirvulescusurdeanu.septica.controllers.MainController;
+import android.util.Log;
 
 public class GameThread extends Thread {
 	private final boolean isServer;
@@ -15,7 +16,7 @@ public class GameThread extends Thread {
 	private final GameActivity game;
 	private String command;
 	private LinkedList<CardBase> turnList;
-	private boolean meFirst; 
+	private boolean meFirst;
 
 	public GameThread(boolean isServer) {
 		this.isServer = isServer;
@@ -40,7 +41,7 @@ public class GameThread extends Thread {
 		// Se iau 4 carti din acest pachet si se trimit catre utilizatorul de
 		// pe server. In principiu, se vor trimite catre GameActivity.
 		for (int i = 0; i < 4; i++) {
-			sendCardToUser(deck.removeFirst());
+			sendCardToUI(1, deck.removeFirst());
 		}
 		// Se iau 4 carti din pachet si se trimit catre client. Acestea se vor
 		// trimite prin Bluetooth.
@@ -50,44 +51,117 @@ public class GameThread extends Thread {
 		}
 		frame.deleteCharAt(frame.length() - 1);
 		sendBluetoothCommand("take-" + frame.toString());
-		// Incepem o tura. Initializam lista de carti din aceasta tura.
-		turnList.clear();
-		CardBase myCard;
-		CardBase opponentCard;
-		do {
-			// Sunt eu primul?
-			if (meFirst) {
-				// Daca da astept sa primesc o carte de la utilizator
-				waitForUserTurn(false);
-				// Ce carte a fost aleasa?
-				myCard = new CardBase(command);
-				// Adaugam cartea in lista de carti
-				turnList.add(myCard);
-				// Cer o carte de la client
-				sendBluetoothCommand("give");
-				// Astept pana primesc raspuns de la client cu o carte
-				waitForBluetoothCommand();
-				// Ce carte a fost aleasa?
-				opponentCard = new CardBase(command);
-				// Adaugam cartea in lista de carti
-				turnList.add(opponentCard);
-			} else {
-				// Cer o carte de la client
-				sendBluetoothCommand("give");
-				// Astept pana primesc raspuns de la client cu o carte
-				waitForBluetoothCommand();
-				// Ce carte a fost aleasa?
-				opponentCard = new CardBase(command);
-				// Adaugam cartea in lista de carti
-				turnList.add(opponentCard);
-				// Acum astept si eu o carte de la utilizator
-				waitForUserTurn(false);
-				myCard = new CardBase(command);
-				turnList.add(myCard);
+		
+		int serverPoints = 0;
+		int clientPoints = 0;
+		
+		// Jocul se v-a termina atunci cand nu vor mai fi carti in pachet.
+		while (deck.getNumberOfCards() > 0) {
+			CardBase myCard;
+			CardBase opponentCard;
+			boolean continueTurn = false;
+			boolean serverWinner = true;
+			// Simuleaza o tura...
+			do {
+				// Sunt eu primul?
+				if (meFirst) {
+					// Daca da astept sa primesc o carte de la utilizator
+					waitForUserTurn((continueTurn) ? true : false);
+					// Ce carte a fost aleasa?
+					if (command.equals("no")) {
+						serverWinner = false;
+						break;
+					}
+					myCard = new CardBase(command);
+					// Adaugam cartea in lista de carti
+					turnList.add(myCard);
+					// Trimit cartea aleasa de mine catre client...
+					sendBluetoothCommand("update-" + command);
+					// Cer o carte de la client
+					sendBluetoothCommand("give");
+					// Astept pana primesc raspuns de la client cu o carte
+					waitForBluetoothCommand();
+					// Ce carte a fost aleasa?
+					opponentCard = new CardBase(command);
+					// Adaugam cartea in lista de carti
+					turnList.add(opponentCard);
+					// Ce carte am primit de la client?
+					sendCardToUI(0, opponentCard);
+				} else {
+					// Cer o carte de la client. Imi va da ceva sau nu?
+					if (continueTurn) {
+						sendBluetoothCommand("continue");
+					} else {
+						sendBluetoothCommand("give");
+					}
+					// Astept pana primesc raspuns de la client cu o carte
+					waitForBluetoothCommand();
+					// Ce carte a fost aleasa?
+					if (command.equals("no")) {
+						serverWinner = true;
+						break;
+					}
+					opponentCard = new CardBase(command);
+					// Adaugam cartea in lista de carti
+					turnList.add(opponentCard);
+					// Ce carte am primit de la client?
+					sendCardToUI(0, opponentCard);
+					// Acum astept si eu o carte de la utilizator
+					waitForUserTurn(false);
+					myCard = new CardBase(command);
+					turnList.add(myCard);
+					// Trimit cartea aleasa de mine catre client...
+					sendBluetoothCommand("update-" + command);
+				}
+				// Tura va continua pana cand se produce o taietura si jocul se va continua
+				if ((meFirst && myCard.isCut(opponentCard)) || (!meFirst && opponentCard.isCut(myCard))) {
+					continueTurn = true;
+				} else {
+					continueTurn = false;
+				}
 			}
+			// Continua executia turei atata timp cat s-a produs o taietura sau
+			// utilizatorul a mai dorit asta...
+			while (continueTurn);
+			// Cine a castigat tura?
+			if (serverWinner) {
+				meFirst = true;
+				// Serverul este cel care a castigat. Actualizam punctajul sau...
+				for (CardBase card : turnList) {
+					serverPoints += card.getPoints();
+				}
+			} else {
+				meFirst = false;
+				// Clientul este cel care a castigat. Sa-i acordam punctele sale...
+				for (CardBase card : turnList) {
+					clientPoints += card.getPoints();
+				}
+			}
+			// In acest moment tura s-a terminat (notificam clientul pentru faptul ca
+			// tura s-a terminat).
+			sendBluetoothCommand("clear");
+			// Si cartile de pe propria tabla, vor trebui sa dispara...
+			clearTable();
+			// Cate carti se ofera?
+			int count = turnList.size() / 2;
+			for (int i = 0; i < count; i++) {
+				if (turnList.isEmpty()) {
+					break;
+				}
+				// Serverul este primul?
+				if (meFirst) {
+					sendCardToUI(1, deck.removeFirst());
+					sendBluetoothCommand("take-" + deck.removeFirst().getName());
+				} else {
+					sendBluetoothCommand("take-" + deck.removeFirst().getName());
+					sendCardToUI(1, deck.removeFirst());
+				}
+			}
+			// Tura curenta se va sterge complet!
+			turnList.clear();
 		}
-		// Tura va continua pana cand se produce o taietura si jocul se va continua
-		while ((meFirst && myCard.isCut(opponentCard)) || (!meFirst && opponentCard.isCut(myCard)));
+		Log.i("SP", serverPoints + "");
+		Log.i("CP", clientPoints + "");
 		
 	}
 	
@@ -95,12 +169,20 @@ public class GameThread extends Thread {
 		while (true) {
 			// Astepta sa primeasca cele 4 carti initiale pentru jucator...
 			waitForBluetoothCommand();
-			// Am primit o comanda de adaugare carti...
+			// Am primit o comanda de adaugare carti in mana utilizatorului
 			if (command.startsWith("take")) {
 				// Vom adauga cartile in mana utilizatorului nostru...
 				String[] cards = command.substring(command.indexOf('-') + 1).split(",");
 				for (String card : cards) {
-					sendCardToUser(new CardBase(card));
+					sendCardToUI(1, new CardBase(card));
+				}
+			}
+			// Am primit o comanda de adaugare carte a adversarului pe tabla...
+			else if (command.startsWith("update")) {
+				// Vom adauga cartile pe tabla
+				String[] cards = command.substring(command.indexOf('-') + 1).split(",");
+				for (String card : cards) {
+					sendCardToUI(0, new CardBase(card));
 				}
 			}
 			// Am primit o comanda prin care suntem obligati sa dam o carte...
@@ -117,6 +199,11 @@ public class GameThread extends Thread {
 				waitForUserTurn(true);
 				// Daca nu alege nicio carte, atunci command va avea valoarea "no"
 				sendBluetoothCommand(command);
+			}
+			// Am primit o comanda prin care suntem notificati de faptul ca tura
+			// curenta s-a terminat.
+			else if (command.startsWith("clear")) {
+				clearTable();
 			}
 		}
 	}
@@ -138,19 +225,31 @@ public class GameThread extends Thread {
 	}
 	
 	/**
+	 * S-a terminat o mana. Vom face ca toate cartile de pe tabla sa dispara...
+	 */
+	private void clearTable() {
+		game.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				game.removeView(0, null);
+			}
+		});
+	}
+	
+	/**
 	 * Trimite o carte catre utilizatorul de pe dispozitivul care ruleaza acum.
 	 * 
 	 * @param card
 	 * 		Cartea ce va fi trimisa.
 	 */
-	private void sendCardToUser(final CardBase card) {
+	private void sendCardToUI(final int where, final CardBase card) {
 		game.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				// Inainte de a afisa cartea pe ecran, ne asiguram ca ii setam
-				// si un listener.
-				card.registerClickListener();
-				game.addView(1, card.getImage());
+				if (where == 1) {
+					card.registerClickListener();
+				}
+				game.addView(where, card.getImage());
 			}
 		});
 	}

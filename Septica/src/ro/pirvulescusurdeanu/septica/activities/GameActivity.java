@@ -132,10 +132,7 @@ public class GameActivity extends AbstractActivity implements OnClickListener {
 			if (!canClick) {
 				return;
 			}
-			// Am selectat ceva, nu mai permitem click-ul pana cand nu vom mai primi
-			// alte mesaje.
-			canClick = false;
-		
+					
 			// Obtinem cartea care a fost selectata.
 			CardBase card = (CardBase) view.getTag();
 			
@@ -158,6 +155,10 @@ public class GameActivity extends AbstractActivity implements OnClickListener {
 			if (endTurn.isEnabled()) {
 				endTurn.setEnabled(false);
 			}
+			
+			// Am selectat ceva, nu mai permitem click-ul pana cand nu vom mai primi
+			// alte mesaje.
+			canClick = false;
 		
 			// Scoatem cartea din mana utilizatorului
 			removeView(1, (ImageView)view);
@@ -177,6 +178,10 @@ public class GameActivity extends AbstractActivity implements OnClickListener {
 		// S-a apasat pe butonul de Stop? Anuntam incheierea turii.
 		else {
 			endTurn.setEnabled(false);
+			
+			// Am selectat ceva, nu mai permitem click-ul pana cand nu vom mai primi
+			// alte mesaje.
+			canClick = false;
 			
 			// Trimitem firului de executie un mesaj prin care il notificam
 			// ca utilizatorul nu a selectat nicio carte
