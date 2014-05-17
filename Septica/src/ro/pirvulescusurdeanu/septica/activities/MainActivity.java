@@ -16,8 +16,10 @@ public class MainActivity extends AbstractActivity implements MainListener {
 	public MainActivity() {
 		super(R.layout.activity_main);
 		BluetoothController.getInstance().addMainListener(this);
+		
 	}
-
+	
+	
 	@Override
 	protected void afterCreate(Bundle savedInstanceState) {
 		listener = new PlayClickListener();
@@ -31,6 +33,8 @@ public class MainActivity extends AbstractActivity implements MainListener {
 		Button client = (Button) findViewById(R.id.client);
 		client.setTag(TagName.CLIENT_BUTTON);
 		client.setOnClickListener(listener);
+		
+
 	}
 	
 	@Override

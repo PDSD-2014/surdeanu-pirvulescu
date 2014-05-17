@@ -43,6 +43,7 @@ public class GameThread extends Thread {
 		for (int i = 0; i < 4; i++) {
 			sendCardToUI(1, deck.removeFirst());
 		}
+		int serverCards = 4;
 		// Se iau 4 carti din pachet si se trimit catre client. Acestea se vor
 		// trimite prin Bluetooth.
 		StringBuilder frame = new StringBuilder();
@@ -54,17 +55,21 @@ public class GameThread extends Thread {
 		
 		int serverPoints = 0;
 		int clientPoints = 0;
+		boolean serverWinner = true;
 		
 		// Jocul se v-a termina atunci cand nu vor mai fi carti in pachet.
-		while (deck.getNumberOfCards() > 0) {
+		while (serverCards > 0 || deck.getNumberOfCards() > 0) {
 			CardBase myCard;
 			CardBase opponentCard;
 			boolean continueTurn = false;
-			boolean serverWinner = true;
+			
+			
 			// Simuleaza o tura...
 			do {
+				
 				// Sunt eu primul?
 				if (meFirst) {
+					
 					// Daca da astept sa primesc o carte de la utilizator
 					waitForUserTurn((continueTurn) ? true : false);
 					// Ce carte a fost aleasa?
@@ -72,11 +77,15 @@ public class GameThread extends Thread {
 						serverWinner = false;
 						break;
 					}
+					//daca se da o carte jos
+					serverCards--;
+					
 					myCard = new CardBase(command);
 					// Adaugam cartea in lista de carti
 					turnList.add(myCard);
 					// Trimit cartea aleasa de mine catre client...
 					sendBluetoothCommand("update-" + command);
+					waitForBluetoothCommand();
 					// Cer o carte de la client
 					sendBluetoothCommand("give");
 					// Astept pana primesc raspuns de la client cu o carte
@@ -101,6 +110,10 @@ public class GameThread extends Thread {
 						serverWinner = true;
 						break;
 					}
+					
+					//daca se da o carte jos
+					serverCards--;
+					
 					opponentCard = new CardBase(command);
 					// Adaugam cartea in lista de carti
 					turnList.add(opponentCard);
@@ -112,6 +125,7 @@ public class GameThread extends Thread {
 					turnList.add(myCard);
 					// Trimit cartea aleasa de mine catre client...
 					sendBluetoothCommand("update-" + command);
+					waitForBluetoothCommand();
 				}
 				// Tura va continua pana cand se produce o taietura si jocul se va continua
 				if ((meFirst && myCard.isCut(opponentCard)) || (!meFirst && opponentCard.isCut(myCard))) {
@@ -145,9 +159,12 @@ public class GameThread extends Thread {
 			// Cate carti se ofera?
 			int count = turnList.size() / 2;
 			for (int i = 0; i < count; i++) {
-				if (turnList.isEmpty()) {
+				if (deck.getNumberOfCards()==0) {
 					break;
 				}
+				//primim carte din pachet
+				serverCards++;
+				
 				// Serverul este primul?
 				if (meFirst) {
 					sendCardToUI(1, deck.removeFirst());
@@ -184,6 +201,7 @@ public class GameThread extends Thread {
 				for (String card : cards) {
 					sendCardToUI(0, new CardBase(card));
 				}
+				sendBluetoothCommand("ack");
 			}
 			// Am primit o comanda prin care suntem obligati sa dam o carte...
 			else if (command.startsWith("give")) {

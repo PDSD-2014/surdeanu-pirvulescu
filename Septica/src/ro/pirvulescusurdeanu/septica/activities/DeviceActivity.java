@@ -6,6 +6,7 @@ import ro.pirvulescusurdeanu.septica.R;
 import ro.pirvulescusurdeanu.septica.controllers.BluetoothController;
 import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -23,6 +24,7 @@ public class DeviceActivity extends Activity implements OnItemClickListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_device);
+		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		
         pairedDevices = new ArrayList<BluetoothDevice>();
         namedDevices = new ArrayList<String>();

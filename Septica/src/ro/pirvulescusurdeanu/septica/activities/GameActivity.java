@@ -21,6 +21,7 @@ public class GameActivity extends AbstractActivity implements OnClickListener {
 	private GridLayout grid;
 	private Button endTurn;
 	private boolean canClick;
+
 	
 	public GameActivity() {
 		super(R.layout.activity_game);
@@ -89,7 +90,7 @@ public class GameActivity extends AbstractActivity implements OnClickListener {
 	 */
 	public void addView(int where, ImageView view) {
 		if (where == 0) {
-			table.addView(view, 60, 100);
+			table.addView(view, 45, 80);
 		} else if (where == 1) {
 			userHand.addView(view);
 		}
@@ -132,7 +133,7 @@ public class GameActivity extends AbstractActivity implements OnClickListener {
 			if (!canClick) {
 				return;
 			}
-					
+			
 			// Obtinem cartea care a fost selectata.
 			CardBase card = (CardBase) view.getTag();
 			
@@ -142,6 +143,7 @@ public class GameActivity extends AbstractActivity implements OnClickListener {
 			// va pune o carte din categoria primeia din lista.
 			if (endTurn.isEnabled() && card.getNumber() != 7) {
 				// Se obtine prima carte care a fost pusa pe tabla.
+			
 				CardBase firstCard = (CardBase)(((ImageView)table.getChildAt(0)).getTag());
 				if (firstCard.getNumber() != card.getNumber()) {
 					Toast toast = Toast.makeText(getApplicationContext(),

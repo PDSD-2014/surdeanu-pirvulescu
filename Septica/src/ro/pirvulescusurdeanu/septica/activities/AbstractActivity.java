@@ -2,6 +2,7 @@ package ro.pirvulescusurdeanu.septica.activities;
 
 import ro.pirvulescusurdeanu.septica.controllers.MainController;
 import android.app.Activity;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 
 public abstract class AbstractActivity extends Activity {
@@ -15,6 +16,7 @@ public abstract class AbstractActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(layoutResID);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         
         // La creare este actualizata si activitatea curenta interna
         MainController.getInstance().setCurrentActivity(this);

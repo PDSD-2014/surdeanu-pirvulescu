@@ -39,7 +39,8 @@ public class SplashActivity extends AbstractActivity implements SplashListener {
 		}
 		// Ce se intampla in cazul in care apare o eroare?
 		else {
-			// TODO
+			//TO DO
+			this.finish();
 		}
 	}
 

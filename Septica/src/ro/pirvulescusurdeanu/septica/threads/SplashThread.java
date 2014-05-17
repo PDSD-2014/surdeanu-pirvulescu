@@ -53,6 +53,7 @@ public class SplashThread extends Thread implements SplashNotifier {
 			if (callback == null) {
 				// TODO: Jurnalizare warning
 				// Se evita exceptiile de pe NullPointerException
+				
 				return;
 			}
 			
