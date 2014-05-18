@@ -84,8 +84,8 @@ public class CardBase {
 	 * @return
 	 * 		True daca exista taiatura sau False altfel.
 	 */
-	public boolean isCut(CardBase card) {
-		return (card.getNumber() == 7 || number == card.getNumber()) ? true : false;
+	public boolean isCut(CardBase card,CardBase firstCard) {
+		return (card.getNumber() == 7 || number == card.getNumber()||card.getNumber()==firstCard.getNumber()) ? true : false;
 	}
 	
 	/**

@@ -39,12 +39,16 @@ public class GameThread extends Thread {
 	public void runServer() {
 		// Se construieste pachetul de carti.
 		deck = new Deck();
+		
 		// Se iau 4 carti din acest pachet si se trimit catre utilizatorul de
 		// pe server. In principiu, se vor trimite catre GameActivity.
 		for (int i = 0; i < 4; i++) {
 			sendCardToUI(1, deck.removeFirst());
 		}
+		
+		//initializam numarul de carti din mana serverului
 		int serverCards = 4;
+		
 		// Se iau 4 carti din pachet si se trimit catre client. Acestea se vor
 		// trimite prin Bluetooth.
 		StringBuilder frame = new StringBuilder();
@@ -53,6 +57,10 @@ public class GameThread extends Thread {
 		}
 		frame.deleteCharAt(frame.length() - 1);
 		sendBluetoothCommand("take-" + frame.toString());
+		
+		//astept ACK
+		waitForBluetoothCommand();
+		
 		
 		int serverPoints = 0;
 		int clientPoints = 0;
@@ -91,12 +99,14 @@ public class GameThread extends Thread {
 					turnList.add(myCard);
 					// Trimit cartea aleasa de mine catre client...
 					sendBluetoothCommand("update-" + command);
+					
 					//astept ACK
 					waitForBluetoothCommand();
 					// Cer o carte de la client
 					sendBluetoothCommand("give");
 					// Astept pana primesc raspuns de la client cu o carte
 					waitForBluetoothCommand();
+					
 					// Ce carte a fost aleasa?
 					opponentCard = new CardBase(command);
 					// Adaugam cartea in lista de carti
@@ -110,6 +120,7 @@ public class GameThread extends Thread {
 					} else {
 						sendBluetoothCommand("give");
 					}
+					
 					// Astept pana primesc raspuns de la client cu o carte
 					waitForBluetoothCommand();
 					// Daca oponentul a renuntat si nu mai taie cartea
@@ -132,11 +143,12 @@ public class GameThread extends Thread {
 					turnList.add(myCard);
 					// Trimit cartea aleasa de mine catre client...
 					sendBluetoothCommand("update-" + command);
+					
 					//astept ACK
 					waitForBluetoothCommand();
 				}
 				// Tura va continua pana cand se produce o taietura si jocul se va continua
-				if ((meFirst && myCard.isCut(opponentCard)) || (!meFirst && opponentCard.isCut(myCard))) {
+				if ((meFirst && myCard.isCut(opponentCard,turnList.get(0))) || (!meFirst && opponentCard.isCut(myCard,turnList.get(0)))) {
 					continueTurn = true;
 				} else {
 					continueTurn = false;
@@ -165,6 +177,7 @@ public class GameThread extends Thread {
 				update(serverPoints,1);
 				sendBluetoothCommand("Informations-"+","+clientPoints+","+"2");
 				
+				
 			}else{
 				update(serverPoints,2);
 				sendBluetoothCommand("Informations-"+","+clientPoints+","+"1");
@@ -179,7 +192,16 @@ public class GameThread extends Thread {
 			// tura s-a terminat).
 			sendBluetoothCommand("clear");
 			// Si cartile de pe propria tabla, vor trebui sa dispara...
+			
+			
+			
 			clearTable();
+			
+			
+			//astept ACK ca am curatat tabla
+			waitForBluetoothCommand();
+			
+			
 			// Cate carti se ofera?
 			int count = turnList.size() / 2;
 			for (int i = 0; i < count; i++) {
@@ -197,6 +219,11 @@ public class GameThread extends Thread {
 					sendBluetoothCommand("take-" + deck.removeFirst().getName());
 					sendCardToUI(1, deck.removeFirst());
 				}
+				
+				//astept ACK
+				waitForBluetoothCommand();
+				
+				
 			}
 			// Tura curenta se va sterge complet!
 			turnList.clear();
@@ -206,8 +233,12 @@ public class GameThread extends Thread {
 		
 		if(flag==true){
 			flag = false;
-		sendBluetoothCommand("Finish");
-		finish();
+			
+			sendBluetoothCommand("Finish");
+			canReplay();
+			canExit();
+			//activam butoanele de exit si replay 
+			finish();
 		}
 		
 		
@@ -224,6 +255,10 @@ public class GameThread extends Thread {
 				for (String card : cards) {
 					sendCardToUI(1, new CardBase(card));
 				}
+				
+				//trimit ACK ca am primit carti
+				sendBluetoothCommand("ack");
+				
 			}
 			// Am primit o comanda de adaugare carte a adversarului pe tabla...
 			else if (command.startsWith("update")) {
@@ -255,6 +290,9 @@ public class GameThread extends Thread {
 			// curenta s-a terminat.
 			else if (command.startsWith("clear")) {
 				clearTable();
+				
+				//trimit ACK 
+				sendBluetoothCommand("ack");
 			} 
 			
 			//vedem daca se face update la scor sau la cine incepe primul
@@ -274,7 +312,11 @@ public class GameThread extends Thread {
 			
 			else if(command.startsWith("Fi")){
 				
-			
+				//activam butoanele de exit si replay 
+				
+				canReplay();
+				canExit();
+				//afisam daca am castigat sau nu
 				finish();
 			}
 		}
@@ -328,7 +370,38 @@ public class GameThread extends Thread {
 	}
 	
 	
+	/**
+	 * Daca jocul s-a terminat se poate apasa butonul de Exit
+	 */
+	private void canExit(){
 	
+		game.runOnUiThread(new Runnable() {
+			
+			@Override
+			public void run() {
+				game.canExit();
+				
+			}
+		});
+		
+	}
+	
+	
+	/**
+	 * Daca jocul s-a terminat se poate apasa butonul de Exit
+	 */
+	private void canReplay(){
+	
+		game.runOnUiThread(new Runnable() {
+			
+			@Override
+			public void run() {
+				game.canReplay();
+				
+			}
+		});
+		
+	}
 	
 	
 	

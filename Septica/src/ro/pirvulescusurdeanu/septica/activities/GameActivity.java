@@ -4,7 +4,10 @@ import ro.pirvulescusurdeanu.septica.R;
 import ro.pirvulescusurdeanu.septica.cards.CardBase;
 import ro.pirvulescusurdeanu.septica.controllers.BluetoothController;
 import ro.pirvulescusurdeanu.septica.threads.GameThread;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -17,12 +20,14 @@ import android.widget.Toast;
 
 public class GameActivity extends AbstractActivity implements OnClickListener {
 	private GameThread startGame;
-	private LinearLayout userHand, table, informatii;
+	private LinearLayout userHand, table, informatii,butoane;
 	private GridLayout grid;
 	private Button endTurn;
 	private boolean canClick;
 	private Button scor;
 	private Button turn;
+	private Button exit;
+	private Button replay;
 
 	
 	public GameActivity() {
@@ -59,16 +64,35 @@ public class GameActivity extends AbstractActivity implements OnClickListener {
 		userHand = new LinearLayout(context);
 		table = new LinearLayout(context);
 		informatii = new LinearLayout(context);
+		butoane = new LinearLayout(context);
 		
 		grid = new GridLayout(context);
 		grid.setRowCount(4);
 		grid.setColumnCount(1);
 		
+		//endTurn button
 		endTurn = new Button(context);
 		endTurn.setText("End Hand");
 		endTurn.setEnabled(false);
 		endTurn.setOnClickListener(this);
 		
+		
+		//exit button
+		exit = new Button(context);
+		exit.setText("Exit");
+		exit.setEnabled(false);
+		exit.setOnClickListener(this);
+		exit.setVisibility(View.INVISIBLE);
+		
+		//replay button
+		replay = new Button(context);
+		replay.setText("Replay");
+		replay.setEnabled(false);
+		replay.setOnClickListener(this);
+		replay.setVisibility(View.INVISIBLE);
+		
+		
+		//butoane pentru scor si afisat cine este la rand
 		turn = new Button(context);
 		scor = new Button(context);
 		turn.setText("Al doilea");
@@ -79,10 +103,14 @@ public class GameActivity extends AbstractActivity implements OnClickListener {
 		informatii.addView(endTurn);
 		informatii.addView(turn);
 		informatii.addView(scor);
+		
+		butoane.addView(exit);
+		butoane.addView(replay);
 
 		grid.addView(table, 600, 200);
 		grid.addView(userHand);
 		grid.addView(informatii);
+		grid.addView(butoane);
 		
 		frame.addView(grid);
 	}
@@ -157,6 +185,11 @@ public class GameActivity extends AbstractActivity implements OnClickListener {
 	@Override
 	public void finish(){
 		
+		endTurn.setVisibility(View.INVISIBLE);
+		scor.setVisibility(View.INVISIBLE);
+		turn.setVisibility(View.INVISIBLE);
+		
+		
 		String aaa =""+ this.scor.getText();
 		int rezultat = Integer.parseInt(aaa);
 		//daca am castigat
@@ -186,6 +219,25 @@ public class GameActivity extends AbstractActivity implements OnClickListener {
 	}
 	
 	
+	
+	/**
+	 * Daca s-a terminat jocul, jucatorul poate iesi din joc
+	 */
+	public void canExit(){
+		
+		exit.setVisibility(View.VISIBLE);
+		exit.setEnabled(true);
+	}
+	
+	
+	/**
+	 * Daca s-a terminat jocul, jucatorul poate restarta jocul
+	 */
+	public void canReplay(){
+		
+		replay.setVisibility(View.VISIBLE);
+		replay.setEnabled(true);
+	}
 
 	/**
 	 * Ce se intampla cand se da click pe o carte de joc?
@@ -193,6 +245,7 @@ public class GameActivity extends AbstractActivity implements OnClickListener {
 	@Override
 	public void onClick(View view) {
 		if (view instanceof ImageView) {
+			
 			// Ne asiguram ca utilizatorul poate alege doar o carte pe tura...
 			if (!canClick) {
 				return;
@@ -243,18 +296,46 @@ public class GameActivity extends AbstractActivity implements OnClickListener {
 		}
 		// S-a apasat pe butonul de Stop? Anuntam incheierea turii.
 		else {
-			endTurn.setEnabled(false);
 			
-			// Am selectat ceva, nu mai permitem click-ul pana cand nu vom mai primi
-			// alte mesaje.
-			canClick = false;
 			
-			// Trimitem firului de executie un mesaj prin care il notificam
-			// ca utilizatorul nu a selectat nicio carte
-			startGame.postMessage("no");
-			// Il notificam sa se deblocheze
-			synchronized (startGame) {
-				startGame.notify();
+			Button bt = (Button) view;
+			if(bt.getText().equals("Replay")){
+				//daca s-a apasat butonul de replay
+				
+				Context context = this.getBaseContext();
+				Intent mStartActivity = new Intent(context, SplashActivity.class);
+				int mPendingIntentId = 123456;
+				PendingIntent mPendingIntent = PendingIntent.getActivity(context, mPendingIntentId,    mStartActivity, PendingIntent.FLAG_CANCEL_CURRENT);
+				AlarmManager mgr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+				mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
+				System.exit(0);
+				
+				
+				
+				
+				
+			}else if(bt.getText().equals("Exit")){
+				
+				//daca se apasa butonul de exit
+				System.exit(0);
+				
+			}
+			//daca apasam butonul de End Turn
+			else{
+			
+				endTurn.setEnabled(false);
+				
+				// Am selectat ceva, nu mai permitem click-ul pana cand nu vom mai primi
+				// alte mesaje.
+				canClick = false;
+				
+				// Trimitem firului de executie un mesaj prin care il notificam
+				// ca utilizatorul nu a selectat nicio carte
+				startGame.postMessage("no");
+				// Il notificam sa se deblocheze
+				synchronized (startGame) {
+					startGame.notify();
+				}
 			}
 		}
 	}
