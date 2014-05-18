@@ -17,10 +17,12 @@ import android.widget.Toast;
 
 public class GameActivity extends AbstractActivity implements OnClickListener {
 	private GameThread startGame;
-	private LinearLayout userHand, table;
+	private LinearLayout userHand, table, informatii;
 	private GridLayout grid;
 	private Button endTurn;
 	private boolean canClick;
+	private Button scor;
+	private Button turn;
 
 	
 	public GameActivity() {
@@ -56,6 +58,7 @@ public class GameActivity extends AbstractActivity implements OnClickListener {
 		FrameLayout frame = (FrameLayout)findViewById(R.id.container);
 		userHand = new LinearLayout(context);
 		table = new LinearLayout(context);
+		informatii = new LinearLayout(context);
 		
 		grid = new GridLayout(context);
 		grid.setRowCount(4);
@@ -65,10 +68,21 @@ public class GameActivity extends AbstractActivity implements OnClickListener {
 		endTurn.setText("End Hand");
 		endTurn.setEnabled(false);
 		endTurn.setOnClickListener(this);
+		
+		turn = new Button(context);
+		scor = new Button(context);
+		turn.setText("Al doilea");
+		turn.setEnabled(false);
+		scor.setText("0");
+		scor.setEnabled(false);
+		
+		informatii.addView(endTurn);
+		informatii.addView(turn);
+		informatii.addView(scor);
 
 		grid.addView(table, 600, 200);
 		grid.addView(userHand);
-		grid.addView(endTurn);
+		grid.addView(informatii);
 		
 		frame.addView(grid);
 	}
@@ -90,7 +104,7 @@ public class GameActivity extends AbstractActivity implements OnClickListener {
 	 */
 	public void addView(int where, ImageView view) {
 		if (where == 0) {
-			table.addView(view, 45, 80);
+			table.addView(view, 40, 80);
 		} else if (where == 1) {
 			userHand.addView(view);
 		}
@@ -122,6 +136,56 @@ public class GameActivity extends AbstractActivity implements OnClickListener {
 		}
 		// TODO: pentru oponent
 	}
+	
+	
+	//updatam scorul
+	//rand = 1 - sunt primul
+	//rand = 2 - sunt al doilea 
+	public void updateInfomations(int scor, int rand){
+		this.scor.setText(""+scor);
+		
+		if(rand == 1){
+			this.turn.setText("Primul");
+		}else{
+			this.turn.setText("Al doilea");
+		}
+		
+	}
+	
+	//cand se termina jocul
+	
+	@Override
+	public void finish(){
+		
+		String aaa =""+ this.scor.getText();
+		int rezultat = Integer.parseInt(aaa);
+		//daca am castigat
+		if(rezultat>4){
+		
+			Toast toast = Toast.makeText(getApplicationContext(),
+					"Ai castigat.",
+					Toast.LENGTH_SHORT);
+			toast.show();
+
+		}else if(rezultat==4){//daca este egalitate
+			Toast toast = Toast.makeText(getApplicationContext(),
+					"Egalitate",
+					Toast.LENGTH_SHORT);
+			toast.show();
+
+			
+		}else{//daca am pierdut
+			
+			Toast toast = Toast.makeText(getApplicationContext(),
+					"Ai pierdut",
+					Toast.LENGTH_SHORT);
+			toast.show();
+
+		}
+		
+	}
+	
+	
 
 	/**
 	 * Ce se intampla cand se da click pe o carte de joc?

@@ -6,5 +6,6 @@
     <string name="action_settings">Settings</string>
     <string name="device_activity">Alege dispozitiv</string>
     <string name="title_activity_game">GameActivity</string>
+    <string name="title_activity_final">Final</string>
 
 </resources>

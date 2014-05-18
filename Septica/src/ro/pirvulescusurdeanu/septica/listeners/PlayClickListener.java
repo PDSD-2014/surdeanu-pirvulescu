@@ -32,6 +32,8 @@ public class PlayClickListener implements OnClickListener {
 			case SERVER_BUTTON:
 				// Serverul va asculta in permanenta pe un port
 				BluetoothController.getInstance().startServer();
+				v.setEnabled(false);
+				
 				break;
 			// Celalalt dispozitiv va reprezenta dispozitivul de tip client
 			case CLIENT_BUTTON:

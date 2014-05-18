@@ -17,6 +17,7 @@ public class GameThread extends Thread {
 	private String command;
 	private LinkedList<CardBase> turnList;
 	private boolean meFirst;
+	private boolean flag;
 
 	public GameThread(boolean isServer) {
 		this.isServer = isServer;
@@ -56,8 +57,13 @@ public class GameThread extends Thread {
 		int serverPoints = 0;
 		int clientPoints = 0;
 		boolean serverWinner = true;
+		flag = true;
 		
-		// Jocul se v-a termina atunci cand nu vor mai fi carti in pachet.
+		//trimitem scorul initial si anuntam serverul ca incepe primul
+		update(serverPoints,1);
+
+		
+		// Jocul se v-a termina atunci cand nu vor mai fi carti in pachet si cand oponentul nu mai are carti in mana
 		while (serverCards > 0 || deck.getNumberOfCards() > 0) {
 			CardBase myCard;
 			CardBase opponentCard;
@@ -72,7 +78,7 @@ public class GameThread extends Thread {
 					
 					// Daca da astept sa primesc o carte de la utilizator
 					waitForUserTurn((continueTurn) ? true : false);
-					// Ce carte a fost aleasa?
+					// Daca oponentul a renuntat si nu mai taie cartea
 					if (command.equals("no")) {
 						serverWinner = false;
 						break;
@@ -85,6 +91,7 @@ public class GameThread extends Thread {
 					turnList.add(myCard);
 					// Trimit cartea aleasa de mine catre client...
 					sendBluetoothCommand("update-" + command);
+					//astept ACK
 					waitForBluetoothCommand();
 					// Cer o carte de la client
 					sendBluetoothCommand("give");
@@ -105,7 +112,7 @@ public class GameThread extends Thread {
 					}
 					// Astept pana primesc raspuns de la client cu o carte
 					waitForBluetoothCommand();
-					// Ce carte a fost aleasa?
+					// Daca oponentul a renuntat si nu mai taie cartea
 					if (command.equals("no")) {
 						serverWinner = true;
 						break;
@@ -125,6 +132,7 @@ public class GameThread extends Thread {
 					turnList.add(myCard);
 					// Trimit cartea aleasa de mine catre client...
 					sendBluetoothCommand("update-" + command);
+					//astept ACK
 					waitForBluetoothCommand();
 				}
 				// Tura va continua pana cand se produce o taietura si jocul se va continua
@@ -151,6 +159,22 @@ public class GameThread extends Thread {
 					clientPoints += card.getPoints();
 				}
 			}
+			
+			//updatam scorul si randul serverului
+			if(meFirst==true){
+				update(serverPoints,1);
+				sendBluetoothCommand("Informations-"+","+clientPoints+","+"2");
+				
+			}else{
+				update(serverPoints,2);
+				sendBluetoothCommand("Informations-"+","+clientPoints+","+"1");
+			}
+			
+			//astept ACK
+			waitForBluetoothCommand();
+			
+			
+			
 			// In acest moment tura s-a terminat (notificam clientul pentru faptul ca
 			// tura s-a terminat).
 			sendBluetoothCommand("clear");
@@ -180,6 +204,13 @@ public class GameThread extends Thread {
 		Log.i("SP", serverPoints + "");
 		Log.i("CP", clientPoints + "");
 		
+		if(flag==true){
+			flag = false;
+		sendBluetoothCommand("Finish");
+		finish();
+		}
+		
+		
 	}
 	
 	public void runClient() {
@@ -201,6 +232,8 @@ public class GameThread extends Thread {
 				for (String card : cards) {
 					sendCardToUI(0, new CardBase(card));
 				}
+				
+				//trimit ACK ca am updatat lista de jos a cartilor
 				sendBluetoothCommand("ack");
 			}
 			// Am primit o comanda prin care suntem obligati sa dam o carte...
@@ -222,6 +255,27 @@ public class GameThread extends Thread {
 			// curenta s-a terminat.
 			else if (command.startsWith("clear")) {
 				clearTable();
+			} 
+			
+			//vedem daca se face update la scor sau la cine incepe primul
+			else if(command.startsWith("Informations")){
+				
+				String[] cards = command.substring(command.indexOf('-') + 1).split(",");
+				
+				int scor3 = Integer.parseInt(cards[1]);
+				int rand3 = Integer.parseInt(cards[2]);
+				update(scor3, rand3);
+				
+				//trimit ACK 
+				sendBluetoothCommand("ack");
+				
+				
+			}
+			
+			else if(command.startsWith("Fi")){
+				
+			
+				finish();
 			}
 		}
 	}
@@ -252,6 +306,47 @@ public class GameThread extends Thread {
 				game.removeView(0, null);
 			}
 		});
+	}
+	
+	
+	
+	/**
+	 * Cand se termina o mana facem update la scor si informam cine incepe mana
+	 */
+	private void finish(){
+
+
+		game.runOnUiThread(new Runnable() {
+			
+			@Override
+			public void run() {
+				game.finish();
+				
+			}
+		});
+		
+	}
+	
+	
+	
+	
+	
+	
+	/**
+	 * Cand se termina o mana facem update la scor si informam cine incepe mana
+	 */
+	private void update(int scor, int rand){
+		final int scor2 = scor;
+		final int rand2 = rand;
+		game.runOnUiThread(new Runnable() {
+			
+			@Override
+			public void run() {
+				game.updateInfomations(scor2, rand2);
+				
+			}
+		});
+		
 	}
 	
 	/**
